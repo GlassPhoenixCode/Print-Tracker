@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Bambu Print Lab Tracker — Log, score, compare, and master your 3D printing experiments.">
+  <meta name="theme-color" content="#0b0f1a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Print Lab">
+  <link rel="manifest" href="manifest.json">
+  <title>Bambu Print Lab Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+<div id="app">
+
+  <!-- ═══ Top Nav ═══════════════════════════════════════════════════════════ -->
+  <nav id="topnav" role="navigation" aria-label="Main navigation">
+    <a class="nav-brand" href="#" onclick="navigate('dashboard');return false;">
+      <div class="nav-logo">🧪</div>
+      <span>Bambu <em>Print Lab</em></span>
+    </a>
+    <div class="nav-actions">
+      <nav class="desktop-nav" id="desktop-nav" aria-label="Screen navigation"></nav>
+      <button class="theme-toggle" id="theme-btn" title="Toggle theme" aria-label="Toggle dark/light mode">☀️</button>
+    </div>
+  </nav>
+
+  <!-- ═══ Main Content ══════════════════════════════════════════════════════ -->
+  <main id="main-content" role="main">
+
+    <!-- Dashboard -->
+    <section id="screen-dashboard" class="screen" role="tabpanel" aria-label="Dashboard"></section>
+
+    <!-- Experiment List -->
+    <section id="screen-experiments" class="screen" role="tabpanel" aria-label="Experiments"></section>
+
+    <!-- New / Edit Experiment -->
+    <section id="screen-new-experiment" class="screen" role="tabpanel" aria-label="New Experiment"></section>
+
+    <!-- Experiment Detail -->
+    <section id="screen-detail" class="screen" role="tabpanel" aria-label="Experiment Detail"></section>
+
+    <!-- Compare -->
+    <section id="screen-compare" class="screen" role="tabpanel" aria-label="Compare">
+      <p style="color:var(--t3);font-size:13px;padding:32px 0;text-align:center">Loading…</p>
+    </section>
+
+    <!-- Notes -->
+    <section id="screen-notes" class="screen" role="tabpanel" aria-label="Quick Notes"></section>
+
+    <!-- Maintenance -->
+    <section id="screen-maintenance" class="screen" role="tabpanel" aria-label="Maintenance Log"></section>
+
+    <!-- Data / Settings -->
+    <section id="screen-data" class="screen" role="tabpanel" aria-label="Data and Settings"></section>
+
+    <!-- Achievements -->
+    <section id="screen-achievements" class="screen" role="tabpanel" aria-label="Achievements"></section>
+
+  </main>
+
+  <!-- ═══ Bottom Tab Bar ════════════════════════════════════════════════════ -->
+  <nav id="bottomnav" role="tablist" aria-label="Bottom navigation"></nav>
+
+</div><!-- /app -->
+
+<!-- ═══ Lightbox ══════════════════════════════════════════════════════════════ -->
+<div id="lightbox" role="dialog" aria-label="Photo viewer" aria-modal="true">
+  <button id="lightbox-close" aria-label="Close photo">✕</button>
+  <img id="lightbox-img" src="" alt="Print photo">
+</div>
+
+<!-- ═══ Toast Container ════════════════════════════════════════════════════════ -->
+<div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+<!-- ═══ App Scripts ═════════════════════════════════════════════════════════════ -->
+<script type="module" src="app.js"></script>
+
+<!-- ═══ Service Worker Registration ════════════════════════════════════════════ -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js').catch(() => {});
+    });
+  }
+</script>
+
+<!-- ═══ Splash / Loading screen (removed once app boots) ═══════════════════════ -->
+<style>
+  #splash {
+    position:fixed;inset:0;z-index:9999;
+    background:linear-gradient(135deg,#0b0f1a 0%,#111827 100%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:20px;transition:opacity .4s;pointer-events:none;
+  }
+  #splash.hidden{opacity:0;}
+  .splash-logo{font-size:64px;animation:splashPop .5s cubic-bezier(.34,1.56,.64,1) both;}
+  .splash-title{font-family:'Inter',sans-serif;font-size:22px;font-weight:900;
+    letter-spacing:-.02em;color:#e8edf5;}
+  .splash-title em{color:#00b4c8;font-style:normal;}
+  .splash-sub{font-family:'Inter',sans-serif;font-size:13px;color:#64748b;}
+  .splash-bar-wrap{width:180px;height:4px;background:#1e2d42;border-radius:2px;overflow:hidden;}
+  .splash-bar{height:100%;width:0;background:linear-gradient(90deg,#00b4c8,#00cde3);
+    border-radius:2px;animation:splashLoad .8s ease forwards .2s;}
+  @keyframes splashPop{from{transform:scale(.5);opacity:0;}to{transform:scale(1);opacity:1;}}
+  @keyframes splashLoad{to{width:100%;}}
+</style>
+<div id="splash">
+  <div class="splash-logo">🧪</div>
+  <div class="splash-title">Bambu <em>Print Lab</em></div>
+  <div class="splash-sub">Loading your experiment data…</div>
+  <div class="splash-bar-wrap"><div class="splash-bar"></div></div>
+</div>
+<script>
+  // Remove splash once module scripts have loaded
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      const s = document.getElementById('splash');
+      if(s){s.classList.add('hidden');setTimeout(()=>s.remove(),500);}
+    }, 900);
+  });
+</script>
+
+</body>
+</html>
