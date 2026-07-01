@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bambu Print Lab Tracker</title>
+  <meta name="description" content="Local-first tracker for Bambu Lab print experiments, filament, settings, photos, notes, and maintenance.">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <h1>Bambu Print Lab Tracker</h1>
+      <p>Track print experiments, settings changes, filament behavior, support tests, notes, and maintenance.</p>
+    </div>
+    <div class="toolbar wrap">
+      <button id="themeToggle" type="button">Toggle dark mode</button>
+      <button id="quickExportA" type="button" class="primary">Backup JSON</button>
+    </div>
+  </header>
+
+  <nav class="tabs" aria-label="Main sections">
+    <button class="tab active" type="button" data-tab="dashboard">Dashboard</button>
+    <button class="tab" type="button" data-tab="experiments">Experiments</button>
+    <button class="tab" type="button" data-tab="newExperiment">New Experiment</button>
+    <button class="tab" type="button" data-tab="compare">Compare</button>
+    <button class="tab" type="button" data-tab="notes">Notes</button>
+    <button class="tab" type="button" data-tab="maintenance">Maintenance</button>
+    <button class="tab" type="button" data-tab="backup">Backup</button>
+  </nav>
+
+  <main>
+    <section id="dashboard" class="panel active-panel">
+      <div class="toolbar wrap">
+        <button type="button" class="primary" data-jump="newExperiment">Log new experiment</button>
+        <button type="button" data-jump="experiments">View experiments</button>
+      </div>
+      <div id="kpiGrid" class="kpi-grid"></div>
+      <div class="chart-grid">
+        <article class="card"><h3>Status mix</h3><canvas id="statusChart"></canvas></article>
+        <article class="card"><h3>Filament performance</h3><canvas id="filamentChart"></canvas></article>
+        <article class="card"><h3>Settings tested</h3><canvas id="settingsChart"></canvas></article>
+        <article class="card"><h3>Quality trend</h3><canvas id="qualityChart"></canvas></article>
+        <article class="card"><h3>Best print profile</h3><canvas id="radarChart"></canvas></article>
+        <article class="card"><h3>Best experiment</h3><div id="bestCard" class="best-card"></div></article>
+      </div>
+      <article class="card"><h3>Recent experiments</h3><div id="recentExperiments"></div></article>
+    </section>
+
+    <section id="experiments" class="panel">
+      <div class="toolbar wrap">
+        <input id="searchBox" type="search" placeholder="Search experiments, notes, settings, materials…">
+        <select id="filterMaterial"><option value="">All materials</option></select>
+        <select id="filterStatus"><option value="">All statuses</option></select>
+        <select id="filterCategory"><option value="">All setting categories</option></select>
+        <select id="sortBy">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="highest">Highest score</option>
+          <option value="lowest">Lowest score</option>
+          <option value="material">Material</option>
+          <option value="status">Status</option>
+        </select>
+      </div>
+      <div id="experimentList" class="list-grid"></div>
+    </section>
+
+    <section id="newExperiment" class="panel">
+      <form id="experimentForm" class="card">
+        <h2 id="formTitle">New Experiment</h2>
+        <input id="experimentId" type="hidden">
+
+        <h3>Basic information</h3>
+        <div class="grid two">
+          <label>Experiment title <input id="title" required placeholder="PETG support interface test"></label>
+          <label>Date and time <input id="dateTime" type="datetime-local"></label>
+          <label>Printer model <input id="printerModel" list="printerModels"><datalist id="printerModels"></datalist></label>
+          <label>Bambu Studio profile <input id="profileName" list="studioProfiles"><datalist id="studioProfiles"></datalist></label>
+          <label>Model name <input id="modelName" placeholder="Model or file name"></label>
+          <label>Model type <select id="modelType"></select></label>
+        </div>
+
+        <h3>Filament and hardware</h3>
+        <div class="grid three">
+          <label>Filament brand <input id="filamentBrand" list="filamentBrands"><datalist id="filamentBrands"></datalist></label>
+          <label>Filament material <input id="filamentMaterial" list="filamentMaterials"><datalist id="filamentMaterials"></datalist></label>
+          <label>Filament color <input id="filamentColor" list="filamentColors"><datalist id="filamentColors"></datalist></label>
+          <label>Filament condition <select id="filamentCondition"></select></label>
+          <label>Nozzle size <input id="nozzleSize" list="nozzleSizes"><datalist id="nozzleSizes"></datalist></label>
+          <label>Build plate <input id="buildPlate" list="buildPlates"><datalist id="buildPlates"></datalist></label>
+          <label>Bed adhesive <select id="bedAdhesive"></select></label>
+          <label>AMS used <select id="amsUsed"><option>No</option><option>Yes</option></select></label>
+          <label>Dual material <select id="dualMaterial"><option>No</option><option>Yes</option></select></label>
+          <label>Support material <select id="supportMaterial"><option>No</option><option>Yes</option></select></label>
+          <label>Estimated time <input id="estimatedTime" placeholder="e.g., 4h 20m"></label>
+          <label>Actual time <input id="actualTime" placeholder="e.g., 4h 35m"></label>
+          <label>Filament used <input id="filamentUsed" placeholder="e.g., 62 g"></label>
+        </div>
+
+        <h3>Result</h3>
+        <div class="grid two">
+          <label>Status <select id="resultStatus"></select></label>
+          <label>Failure type <select id="failureType"></select></label>
+        </div>
+
+        <h3>Settings changed</h3>
+        <div id="settingsChanged" class="settings-list"></div>
+
+        <h3>Scores</h3>
+        <div id="scoreSliders" class="grid two"></div>
+
+        <h3>Notes</h3>
+        <div class="grid two">
+          <label>What improved? <textarea id="improved"></textarea></label>
+          <label>What got worse? <textarea id="worse"></textarea></label>
+          <label>What surprised you? <textarea id="surprised"></textarea></label>
+          <label>Next test <textarea id="nextTest"></textarea></label>
+          <label class="full">General notes <textarea id="generalNotes"></textarea></label>
+        </div>
+
+        <h3>Photos</h3>
+        <input id="photoInput" type="file" accept="image/*" multiple>
+        <div id="photoPreview" class="photo-grid"></div>
+
+        <div class="form-actions">
+          <button type="submit" class="primary">Save experiment</button>
+          <button id="resetForm" type="button">Reset form</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="compare" class="panel">
+      <article class="card">
+        <h2>Compare experiments</h2>
+        <div class="grid two">
+          <label>Experiment A <select id="compareA"></select></label>
+          <label>Experiment B <select id="compareB"></select></label>
+        </div>
+        <p><button id="runCompare" type="button" class="primary">Run comparison</button></p>
+      </article>
+      <div id="compareOutput"></div>
+      <canvas id="compareRadar" style="display:none"></canvas>
+    </section>
+
+    <section id="notes" class="panel">
+      <form id="noteForm" class="card">
+        <h2>Quick note</h2>
+        <div class="grid two">
+          <label>Related experiment <select id="noteExperiment"></select></label>
+          <label>Tag <select id="noteTag"></select></label>
+          <label class="full">Note <textarea id="noteText" required></textarea></label>
+          <label>Photo <input id="notePhoto" type="file" accept="image/*"></label>
+        </div>
+        <p><button type="submit" class="primary">Save note</button></p>
+      </form>
+      <div id="notesList"></div>
+    </section>
+
+    <section id="maintenance" class="panel">
+      <form id="maintenanceForm" class="card">
+        <h2>Maintenance log</h2>
+        <div class="grid two">
+          <label>Date <input id="maintDate" type="date"></label>
+          <label>Type <select id="maintType"></select></label>
+          <label>Related experiment <select id="maintExperiment"></select></label>
+          <label>Photo <input id="maintPhoto" type="file" accept="image/*"></label>
+          <label class="full">Notes <textarea id="maintNotes"></textarea></label>
+        </div>
+        <p><button type="submit" class="primary">Save maintenance</button></p>
+      </form>
+      <div id="maintenanceList"></div>
+    </section>
+
+    <section id="backup" class="panel">
+      <article class="card">
+        <h2>Backup, import, and sample data</h2>
+        <p id="lastBackup" class="muted"></p>
+        <div class="toolbar wrap">
+          <button id="exportJson" type="button" class="primary">Export backup JSON</button>
+          <label class="buttonlike">Import backup JSON <input id="importJson" type="file" accept="application/json,.json" hidden></label>
+          <button id="loadSamples" type="button">Load sample data</button>
+          <button id="clearSamples" type="button">Clear sample data</button>
+          <button id="clearAll" type="button" class="danger">Clear all local data</button>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <dialog id="detailDialog">
+    <form method="dialog" style="text-align:right"><button type="submit">Close</button></form>
+    <div id="detailContent"></div>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="db.js" defer></script>
+  <script src="charts.js" defer></script>
+  <script src="app.js" defer></script>
+</body>
+</html>
