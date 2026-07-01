@@ -1,131 +1,200 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="description" content="Bambu Print Lab Tracker — Log, score, compare, and master your 3D printing experiments.">
-  <meta name="theme-color" content="#0b0f1a">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Print Lab">
-  <link rel="manifest" href="manifest.json">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Bambu Print Lab Tracker</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <meta name="description" content="Local-first tracker for Bambu Lab print experiments, filament, settings, photos, notes, and maintenance.">
+  <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="styles.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
-<div id="app">
-
-  <!-- ═══ Top Nav ═══════════════════════════════════════════════════════════ -->
-  <nav id="topnav" role="navigation" aria-label="Main navigation">
-    <a class="nav-brand" href="#" onclick="navigate('dashboard');return false;">
-      <div class="nav-logo">🧪</div>
-      <span>Bambu <em>Print Lab</em></span>
-    </a>
-    <div class="nav-actions">
-      <nav class="desktop-nav" id="desktop-nav" aria-label="Screen navigation"></nav>
-      <button class="theme-toggle" id="theme-btn" title="Toggle theme" aria-label="Toggle dark/light mode">☀️</button>
+  <header class="app-header">
+    <div>
+      <h1>Bambu Print Lab Tracker</h1>
+      <p>Track print experiments, settings changes, filament behavior, support tests, notes, and maintenance.</p>
     </div>
+    <div class="toolbar wrap">
+      <button id="themeToggle" type="button">Toggle dark mode</button>
+      <button id="quickExportA" type="button" class="primary">Backup JSON</button>
+    </div>
+  </header>
+
+  <nav class="tabs" aria-label="Main sections">
+    <button class="tab active" type="button" data-tab="dashboard">Dashboard</button>
+    <button class="tab" type="button" data-tab="experiments">Experiments</button>
+    <button class="tab" type="button" data-tab="newExperiment">New Experiment</button>
+    <button class="tab" type="button" data-tab="compare">Compare</button>
+    <button class="tab" type="button" data-tab="notes">Notes</button>
+    <button class="tab" type="button" data-tab="maintenance">Maintenance</button>
+    <button class="tab" type="button" data-tab="backup">Backup</button>
   </nav>
 
-  <!-- ═══ Main Content ══════════════════════════════════════════════════════ -->
-  <main id="main-content" role="main">
-
-    <!-- Dashboard -->
-    <section id="screen-dashboard" class="screen" role="tabpanel" aria-label="Dashboard"></section>
-
-    <!-- Experiment List -->
-    <section id="screen-experiments" class="screen" role="tabpanel" aria-label="Experiments"></section>
-
-    <!-- New / Edit Experiment -->
-    <section id="screen-new-experiment" class="screen" role="tabpanel" aria-label="New Experiment"></section>
-
-    <!-- Experiment Detail -->
-    <section id="screen-detail" class="screen" role="tabpanel" aria-label="Experiment Detail"></section>
-
-    <!-- Compare -->
-    <section id="screen-compare" class="screen" role="tabpanel" aria-label="Compare">
-      <p style="color:var(--t3);font-size:13px;padding:32px 0;text-align:center">Loading…</p>
+  <main>
+    <section id="dashboard" class="panel active-panel">
+      <div class="toolbar wrap">
+        <button type="button" class="primary" data-jump="newExperiment">Log new experiment</button>
+        <button type="button" data-jump="experiments">View experiments</button>
+      </div>
+      <div id="kpiGrid" class="kpi-grid"></div>
+      <div class="chart-grid">
+        <article class="card"><h3>Status mix</h3><canvas id="statusChart"></canvas></article>
+        <article class="card"><h3>Filament performance</h3><canvas id="filamentChart"></canvas></article>
+        <article class="card"><h3>Settings tested</h3><canvas id="settingsChart"></canvas></article>
+        <article class="card"><h3>Quality trend</h3><canvas id="qualityChart"></canvas></article>
+        <article class="card"><h3>Best print profile</h3><canvas id="radarChart"></canvas></article>
+        <article class="card"><h3>Best experiment</h3><div id="bestCard" class="best-card"></div></article>
+      </div>
+      <article class="card"><h3>Recent experiments</h3><div id="recentExperiments"></div></article>
     </section>
 
-    <!-- Notes -->
-    <section id="screen-notes" class="screen" role="tabpanel" aria-label="Quick Notes"></section>
+    <section id="experiments" class="panel">
+      <div class="toolbar wrap">
+        <input id="searchBox" type="search" placeholder="Search experiments, notes, settings, materials…">
+        <select id="filterMaterial"><option value="">All materials</option></select>
+        <select id="filterStatus"><option value="">All statuses</option></select>
+        <select id="filterCategory"><option value="">All setting categories</option></select>
+        <select id="sortBy">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="highest">Highest score</option>
+          <option value="lowest">Lowest score</option>
+          <option value="material">Material</option>
+          <option value="status">Status</option>
+        </select>
+      </div>
+      <div id="experimentList" class="list-grid"></div>
+    </section>
 
-    <!-- Maintenance -->
-    <section id="screen-maintenance" class="screen" role="tabpanel" aria-label="Maintenance Log"></section>
+    <section id="newExperiment" class="panel">
+      <form id="experimentForm" class="card">
+        <h2 id="formTitle">New Experiment</h2>
+        <input id="experimentId" type="hidden">
 
-    <!-- Data / Settings -->
-    <section id="screen-data" class="screen" role="tabpanel" aria-label="Data and Settings"></section>
+        <h3>Basic information</h3>
+        <div class="grid two">
+          <label>Experiment title <input id="title" required placeholder="PETG support interface test"></label>
+          <label>Date and time <input id="dateTime" type="datetime-local"></label>
+          <label>Printer model <input id="printerModel" list="printerModels"><datalist id="printerModels"></datalist></label>
+          <label>Bambu Studio profile <input id="profileName" list="studioProfiles"><datalist id="studioProfiles"></datalist></label>
+          <label>Model name <input id="modelName" placeholder="Model or file name"></label>
+          <label>Model type <select id="modelType"></select></label>
+        </div>
 
-    <!-- Achievements -->
-    <section id="screen-achievements" class="screen" role="tabpanel" aria-label="Achievements"></section>
+        <h3>Filament and hardware</h3>
+        <div class="grid three">
+          <label>Filament brand <input id="filamentBrand" list="filamentBrands"><datalist id="filamentBrands"></datalist></label>
+          <label>Filament material <input id="filamentMaterial" list="filamentMaterials"><datalist id="filamentMaterials"></datalist></label>
+          <label>Filament color <input id="filamentColor" list="filamentColors"><datalist id="filamentColors"></datalist></label>
+          <label>Filament condition <select id="filamentCondition"></select></label>
+          <label>Nozzle size <input id="nozzleSize" list="nozzleSizes"><datalist id="nozzleSizes"></datalist></label>
+          <label>Build plate <input id="buildPlate" list="buildPlates"><datalist id="buildPlates"></datalist></label>
+          <label>Bed adhesive <select id="bedAdhesive"></select></label>
+          <label>AMS used <select id="amsUsed"><option>No</option><option>Yes</option></select></label>
+          <label>Dual material <select id="dualMaterial"><option>No</option><option>Yes</option></select></label>
+          <label>Support material <select id="supportMaterial"><option>No</option><option>Yes</option></select></label>
+          <label>Estimated time <input id="estimatedTime" placeholder="e.g., 4h 20m"></label>
+          <label>Actual time <input id="actualTime" placeholder="e.g., 4h 35m"></label>
+          <label>Filament used <input id="filamentUsed" placeholder="e.g., 62 g"></label>
+        </div>
 
+        <h3>Result</h3>
+        <div class="grid two">
+          <label>Status <select id="resultStatus"></select></label>
+          <label>Failure type <select id="failureType"></select></label>
+        </div>
+
+        <h3>Settings changed</h3>
+        <div id="settingsChanged" class="settings-list"></div>
+
+        <h3>Scores</h3>
+        <div id="scoreSliders" class="grid two"></div>
+
+        <h3>Notes</h3>
+        <div class="grid two">
+          <label>What improved? <textarea id="improved"></textarea></label>
+          <label>What got worse? <textarea id="worse"></textarea></label>
+          <label>What surprised you? <textarea id="surprised"></textarea></label>
+          <label>Next test <textarea id="nextTest"></textarea></label>
+          <label class="full">General notes <textarea id="generalNotes"></textarea></label>
+        </div>
+
+        <h3>Photos</h3>
+        <input id="photoInput" type="file" accept="image/*" multiple>
+        <div id="photoPreview" class="photo-grid"></div>
+
+        <div class="form-actions">
+          <button type="submit" class="primary">Save experiment</button>
+          <button id="resetForm" type="button">Reset form</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="compare" class="panel">
+      <article class="card">
+        <h2>Compare experiments</h2>
+        <div class="grid two">
+          <label>Experiment A <select id="compareA"></select></label>
+          <label>Experiment B <select id="compareB"></select></label>
+        </div>
+        <p><button id="runCompare" type="button" class="primary">Run comparison</button></p>
+      </article>
+      <div id="compareOutput"></div>
+      <canvas id="compareRadar" style="display:none"></canvas>
+    </section>
+
+    <section id="notes" class="panel">
+      <form id="noteForm" class="card">
+        <h2>Quick note</h2>
+        <div class="grid two">
+          <label>Related experiment <select id="noteExperiment"></select></label>
+          <label>Tag <select id="noteTag"></select></label>
+          <label class="full">Note <textarea id="noteText" required></textarea></label>
+          <label>Photo <input id="notePhoto" type="file" accept="image/*"></label>
+        </div>
+        <p><button type="submit" class="primary">Save note</button></p>
+      </form>
+      <div id="notesList"></div>
+    </section>
+
+    <section id="maintenance" class="panel">
+      <form id="maintenanceForm" class="card">
+        <h2>Maintenance log</h2>
+        <div class="grid two">
+          <label>Date <input id="maintDate" type="date"></label>
+          <label>Type <select id="maintType"></select></label>
+          <label>Related experiment <select id="maintExperiment"></select></label>
+          <label>Photo <input id="maintPhoto" type="file" accept="image/*"></label>
+          <label class="full">Notes <textarea id="maintNotes"></textarea></label>
+        </div>
+        <p><button type="submit" class="primary">Save maintenance</button></p>
+      </form>
+      <div id="maintenanceList"></div>
+    </section>
+
+    <section id="backup" class="panel">
+      <article class="card">
+        <h2>Backup, import, and sample data</h2>
+        <p id="lastBackup" class="muted"></p>
+        <div class="toolbar wrap">
+          <button id="exportJson" type="button" class="primary">Export backup JSON</button>
+          <label class="buttonlike">Import backup JSON <input id="importJson" type="file" accept="application/json,.json" hidden></label>
+          <button id="loadSamples" type="button">Load sample data</button>
+          <button id="clearSamples" type="button">Clear sample data</button>
+          <button id="clearAll" type="button" class="danger">Clear all local data</button>
+        </div>
+      </article>
+    </section>
   </main>
 
-  <!-- ═══ Bottom Tab Bar ════════════════════════════════════════════════════ -->
-  <nav id="bottomnav" role="tablist" aria-label="Bottom navigation"></nav>
+  <dialog id="detailDialog">
+    <form method="dialog" style="text-align:right"><button type="submit">Close</button></form>
+    <div id="detailContent"></div>
+  </dialog>
 
-</div><!-- /app -->
-
-<!-- ═══ Lightbox ══════════════════════════════════════════════════════════════ -->
-<div id="lightbox" role="dialog" aria-label="Photo viewer" aria-modal="true">
-  <button id="lightbox-close" aria-label="Close photo">✕</button>
-  <img id="lightbox-img" src="" alt="Print photo">
-</div>
-
-<!-- ═══ Toast Container ════════════════════════════════════════════════════════ -->
-<div id="toast-container" aria-live="polite" aria-atomic="true"></div>
-
-<!-- ═══ App Scripts ═════════════════════════════════════════════════════════════ -->
-<script type="module" src="app.js"></script>
-
-<!-- ═══ Service Worker Registration ════════════════════════════════════════════ -->
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('service-worker.js').catch(() => {});
-    });
-  }
-</script>
-
-<!-- ═══ Splash / Loading screen (removed once app boots) ═══════════════════════ -->
-<style>
-  #splash {
-    position:fixed;inset:0;z-index:9999;
-    background:linear-gradient(135deg,#0b0f1a 0%,#111827 100%);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:20px;transition:opacity .4s;pointer-events:none;
-  }
-  #splash.hidden{opacity:0;}
-  .splash-logo{font-size:64px;animation:splashPop .5s cubic-bezier(.34,1.56,.64,1) both;}
-  .splash-title{font-family:'Inter',sans-serif;font-size:22px;font-weight:900;
-    letter-spacing:-.02em;color:#e8edf5;}
-  .splash-title em{color:#00b4c8;font-style:normal;}
-  .splash-sub{font-family:'Inter',sans-serif;font-size:13px;color:#64748b;}
-  .splash-bar-wrap{width:180px;height:4px;background:#1e2d42;border-radius:2px;overflow:hidden;}
-  .splash-bar{height:100%;width:0;background:linear-gradient(90deg,#00b4c8,#00cde3);
-    border-radius:2px;animation:splashLoad .8s ease forwards .2s;}
-  @keyframes splashPop{from{transform:scale(.5);opacity:0;}to{transform:scale(1);opacity:1;}}
-  @keyframes splashLoad{to{width:100%;}}
-</style>
-<div id="splash">
-  <div class="splash-logo">🧪</div>
-  <div class="splash-title">Bambu <em>Print Lab</em></div>
-  <div class="splash-sub">Loading your experiment data…</div>
-  <div class="splash-bar-wrap"><div class="splash-bar"></div></div>
-</div>
-<script>
-  // Remove splash once module scripts have loaded
-  window.addEventListener('load', () => {
-    setTimeout(() => {
-      const s = document.getElementById('splash');
-      if(s){s.classList.add('hidden');setTimeout(()=>s.remove(),500);}
-    }, 900);
-  });
-</script>
-
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="db.js" defer></script>
+  <script src="charts.js" defer></script>
+  <script src="app.js" defer></script>
 </body>
 </html>
